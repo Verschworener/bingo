@@ -1,0 +1,1202 @@
+using item_component
+
+on load:
+    set {bingo::permissions::*} to "host" and "admin"
+    clear {bingo::perm::host::*}
+    clear {bingo::perm::admin::*}
+    add "Verschworener" and "aisharcxn" to {bingo::perm::host::*}
+    add "Verschworener" and "aisharcxn" to {bingo::perm::admin::*}
+    if {bingo} is not set:
+        set {bingo} to false
+    if {bingo} is false:
+        reload()
+        set {bingo::countdown} to -1
+        if {bingo::time} is not set:
+            set {bingo::time} to 30
+        if {bingo::teams} is not set:
+            set {bingo::teams} to "Aus"
+        if {bingo::sounds} is not set:
+            set {bingo::sounds} to "Aus"
+        loop all players:
+            reloadImages(loop-player)
+        set {bingo::timeInS} to 1
+
+
+on join:
+    send resource pack "https://raw.githubusercontent.com/Verschworener/bingo/refs/heads/main/bingo.zip" to player
+    if {bingo} is false:
+        reloadImages(player)
+    if {bingo} is true:
+        if {bingo::players::*} does not contain player:
+            reloadImages(player)
+            set {bingo::team::%player%} to "&7Zuschauer"
+            if {bingo::specs::*} does not contain player:
+                add player to {bingo::specs::*}
+            set gamemode of player to spectator
+        else:
+            if {bingo::teams} = "An":
+                loop all players:
+                    if {bingo::team::%loop-player%} = {bingo::team::%player%}:
+                        loop {bingo::cellsdone::%loop-player%::*}:
+                            if {bingo::cellsdone::%player%::*} does not contain loop-value-2:
+                                add loop-value-2 to {bingo::cellsdone::%player%::*}
+                                set {bingo::image::%{bingo::cell::%loop-value-2%}%::%player%} to {bingo::image::2::%{bingo::cell::%loop-value-2%}%::%player%}
+                        if {bingo::cellfailed::%loop-player%} is true:
+                            set {bingo::cellfailed::%player%} to true
+                            set {bingo::image::%{bingo::cell::13}%::%player%} to {bingo::image::2::%{bingo::cell::13}%::%player%}
+
+command /bingo [<text>] [<text>] [<text>] [<text>]:
+    trigger:
+        arg-1 is not set:
+            {bingo::perm::host::*} contains player's name:
+                gui("bingo", player)
+
+        arg-1 = "start":
+            if at least one of:
+                {bingo::perm::host::*} contains player's name
+                command sender is not a player
+            then:
+                if arg-2 is set:
+                    if arg-2 parsed as a number is a number:
+                        clear {bingo::players::*}
+                        loop all players:
+                            if {bingo::team::%loop-player%} is not "&7Zuschauer":
+                                add loop-player to {bingo::players::*}
+
+                        if size of {bingo::players::*} > 0:
+
+                            reload()
+                            loop all players:
+                                reloadImages(loop-player)
+
+                            set {bingo::time} to arg-2 parsed as number
+                            set {bingo::timeInS} to {bingo::time} * 60
+
+                            set {bingo::statistics::damage_dealt} to a random integer between 50 and 300
+                            set {bingo::statistics::armor_cleaned} to a random integer between 2 and 6
+                            set {bingo::statistics::fish_caught} to a random integer between 2 and 8
+                            set {bingo::statistics::sneak_time} to a random integer between 60 and 300
+                            set {bingo::statistics::mob_kills} to a random integer between 20 and 40
+                            set {bingo::statistics::kill_entity} to a random integer between 5 and 15
+                            set {bingo::statistics::animals_bred} to a random integer between 3 and 9
+                            set {bingo::statistics::damage_taken} to a random integer between 25 and 100
+                            set {bingo::statistics::fall_one_cm} to a random integer between 100 and 300
+                            set {bingo::statistics::horse_one_cm} to a random integer between 50 and 200
+                            set {bingo::statistics::pig_one_cm} to a random integer between 300 and 100
+                            set {bingo::statistics::swim_one_cm} to a random integer between 50 and 200
+                            set {bingo::statistics::interact_with_anvil} to a random integer between 1 and 5
+                            set {bingo::statistics::interact_with_campfire} to a random integer between 1 and 5
+                            set {bingo::statistics::interact_with_cartography_table} to a random integer between 1 and 5
+                            set {bingo::statistics::interact_with_grindstone} to a random integer between 1 and 5
+                            set {bingo::statistics::interact_with_lectern} to a random integer between 1 and 5
+                            set {bingo::statistics::interact_with_smithing_table} to a random integer between 1 and 5
+                            set {bingo::statistics::interact_with_loom} to a random integer between 1 and 5
+
+                            set Gamerule announceAdvancements of world of player to false
+                            teleport all players to spawn of world "world"
+                            execute console command "/advancement revoke @a everything"
+                            execute console command "/effect clear @a"
+                            execute console command "/mvdelete bingo"
+                            execute console command "/mvconfirm"
+                            execute console command "/mvdelete bingo_nether"
+                            execute console command "/mvconfirm"
+                            execute console command "/mvdelete bingo_the_end"
+                            execute console command "/mvconfirm"
+                            execute console command "/mvcreate bingo normal"
+                            execute console command "/mvcreate bingo_nether nether"
+                            execute console command "/mvcreate bingo_the_end the_end"
+                            teleport all players to spawn of world "bingo"
+
+                            loop all players:
+                                set loop-player's gamemode to survival
+                                if {bingo::specs::*} contains loop-player:
+                                    set loop-player's gamemode to spectator
+                                clear loop-player's inventory
+                                set hunger meter of loop-player to 10
+                                set saturation of loop-player to 5
+                                heal loop-player by 20 hearts
+                                set loop-player's level to 0
+                                set loop-player's level progress to 0
+                                loop {bingo::card::statistics::*}:
+                                    set {_a} to "%loop-value-2%" parsed as statistic
+                                    reset {_a} stat for loop-player
+                                loop {bingo::statistics::mobtypes::*}:
+                                    set {_a} to "%loop-value-2%" parsed as entity type
+                                    reset kill entity stat using {_a} for loop-player
+                                    set {bingo::points::%loop-player%} to 0
+
+                            set {_a} to arg-2 parsed as number
+                            
+                            wait 10 ticks
+
+                            set {bingo::move} to false
+                            set {bingo::statistics::mob} to a random element of {bingo::statistics::mobtypes::*}
+                            
+                            set {bingo::cell::1} to a random element of {bingo::card::items::color::*}
+                            remove {bingo::cell::1} from {bingo::card::items::color::*}
+                            set {bingo::cell::2} to a random element of {bingo::card::items::crafting::*}
+                            remove {bingo::cell::2} from {bingo::card::items::crafting::*}
+                            set {bingo::cell::3} to a random element of {bingo::card::items::structure::*}
+                            remove {bingo::cell::3} from {bingo::card::items::structure::*}
+                            set {bingo::cell::4} to a random element of {bingo::card::items::food::*}
+                            remove {bingo::cell::4} from {bingo::card::items::food::*}
+                            set {bingo::cell::5} to a random element of {bingo::card::items::color::*}
+                            remove {bingo::cell::5} from {bingo::card::items::color::*}
+
+                            set {bingo::cell::6} to a random element of {bingo::card::items::stone::*}
+                            remove {bingo::cell::6} from {bingo::card::items::stone::*}
+                            set {bingo::cell::7} to a random element of {bingo::card::advancements::*}
+                            set {bingo::cell::8} to a random element of {bingo::card::items::biome::*}
+                            remove {bingo::cell::8} from {bingo::card::items::biome::*}
+                            set {bingo::cell::9} to "kill_entity_%{bingo::statistics::mob}%"
+                            set {bingo::cell::10} to a random element of {bingo::card::items::nether::*}
+                            remove {bingo::cell::10} from {bingo::card::items::nether::*}
+
+                            set {bingo::cell::11} to a random element of {bingo::card::items::plants::*}
+                            remove {bingo::cell::11} from {bingo::card::items::plants::*}
+                            set {bingo::cell::12} to a random element of {bingo::card::items::ore::*}
+                            remove {bingo::cell::12} from {bingo::card::items::ore::*}
+                            set {bingo::cell::13} to a random element of {bingo::card::avoid::*}
+                            set {bingo::cell::14} to a random element of {bingo::card::items::ore::*}
+                            remove {bingo::cell::14} from {bingo::card::items::ore::*}
+                            set {bingo::cell::15} to a random element of {bingo::card::items::plants::*}
+                            remove {bingo::cell::15} from {bingo::card::items::plants::*}
+
+                            set {bingo::cell::16} to a random element of {bingo::card::items::nether::*}
+                            remove {bingo::cell::16} from {bingo::card::items::nether::*}
+                            set {bingo::cell::17} to a random element of {bingo::card::statistics::*}
+                            set {bingo::cell::18} to a random element of {bingo::card::items::biome::*}
+                            remove {bingo::cell::18} from {bingo::card::items::biome::*}
+                            set {bingo::cell::19} to a random element of {bingo::card::advancements::*}
+                            loop 10 times:
+                                if {bingo::cell::19} = {bingo::cell::7}:
+                                    set {bingo::cell::19} to a random element of {bingo::card::advancements::*}
+                            set {bingo::cell::20} to a random element of {bingo::card::items::stone::*}
+                            remove {bingo::cell::20} from {bingo::card::items::stone::*}
+
+                            set {bingo::cell::21} to a random element of {bingo::card::items::color::*}
+                            remove {bingo::cell::21} from {bingo::card::items::color::*}
+                            set {bingo::cell::22} to a random element of {bingo::card::items::food::*}
+                            remove {bingo::cell::22} from {bingo::card::items::food::*}
+                            set {bingo::cell::23} to a random element of {bingo::card::items::structure::*}
+                            remove {bingo::cell::23} from {bingo::card::items::structure::*}
+                            set {bingo::cell::24} to a random element of {bingo::card::items::crafting::*}
+                            remove {bingo::cell::24} from {bingo::card::items::crafting::*}
+                            set {bingo::cell::25} to a random element of {bingo::card::items::color::*}
+                            remove {bingo::cell::25} from {bingo::card::items::color::*}
+                            
+                            set {bingo::statistics::parsedmob} to {bingo::statistics::mob} parsed as entity type
+                            if {bingo::teams} = "An":
+                                clear {_a}
+                                set {_b} to 0
+                                loop {bingo::players::*}:
+                                    if {_a} is not set:
+                                        set {_a} to {bingo::team::%loop-value%}
+                                    if {_a} = {bingo::team::%loop-value%}:
+                                        add 1 to {_b}
+                                set {bingo::statistics::%{bingo::cell::17}%} to {bingo::statistics::%{bingo::cell::17}%} * {_b}
+                        
+                            loop all players:                
+                                clear {bingo::cellsdone::%loop-player%::*}
+                                set {bingo::horizontally::%loop-player%} to false
+                                set {bingo::vertically::%loop-player%} to false
+                                set {bingo::diagonally::%loop-player%} to false
+                                set {bingo::points::horizontally} to 3
+                                set {bingo::points::vertically} to 3
+
+                                set {_loop} to 1
+                                loop 25 times:
+                                    set {bingo::cell::%{_loop}%::%loop-player%} to {bingo::cell::%{_loop}%}
+                                    add 1 to {_loop}
+                    
+                                set {bingo::tag::cell::7::%loop-player%} to "%{bingo::tag::%{bingo::cell::7}%}%"
+                                set {bingo::tag::cell::19::%loop-player%} to "%{bingo::tag::%{bingo::cell::19}%}%"
+                                set {bingo::tag::cell::9::%loop-player%} to "%{bingo::tag::kill_entity}%"
+                                set {bingo::tag::cell::17::%loop-player%} to "%{bingo::tag::%{bingo::cell::17}%}%"
+                                set {bingo::tag::cell::13::%loop-player%} to "&dVermeide: %{bingo::cell::13}%"
+                            
+                            set {bingo} to false
+                            wait 21 ticks
+                            set {bingo} to true
+                            set {bingo::countdown} to 20
+                            set {bingo::scoreboard} to true
+                            loop all players:
+                                make loop-player execute command "/bingo gui"
+                            loop ({bingo::countdown} + 2) times:
+                                if {bingo} is false:
+                                    stop
+                                wait 1 second
+
+                            loop all players:
+                                close loop-player's inventory
+                            broadcast ""                        
+                            send title "&5- BINGO -" with subtitle "&dMögen die Spiele beginnen!" to all players
+                            broadcast "&5> BINGO startet! &dViel Glück"
+                            set {bingo} to true
+                            loop all players:
+                                playSound(62, loop-player)
+                                if loop-player's inventory does not contain a recovery compass:
+                                    give loop-player a recovery compass named "&6&kII &bBingo-Tracker &6&kII"
+
+                            loop 5 times:
+                                if {bingo} is false:
+                                    stop
+                                wait 1 second
+                            set {bingo::move} to true
+                            loop 2 times:
+                                if {bingo} is false:
+                                    stop
+                                wait 1 second
+                            loop {bingo::players::*}:
+                                play sound "entity.wither.spawn" with volume 0.2 from loop-value to loop-value
+                                send title "&a---- &r%{bingo::image::%{bingo::cell::13}%::%player%}% &a----" with subtitle "&dVermeide: %{bingo::cell::13}%" to loop-value
+                            loop 10 times:
+                                if {bingo} is false:
+                                    stop
+                                wait 1 second
+                            loop all players:
+                                play sound "entity.armor_stand.fall" with volume 100 from loop-player to loop-player
+                            broadcast ""
+                            broadcast "&6> Nutze &l&6/bingo rules &6, um die Bingo-Regeln anzusehen"
+                        else:
+                            send ""
+                            send "&cBingo kann nicht ohne Spieler starten"
+                    else:
+                        send ""
+                        send "&c/bingo start &o<Zeit in Minuten>"
+                else:
+                    send ""
+                    send "&c/bingo start &o<Zeit in Minuten>"
+
+        arg-1 = "end":
+            if at least one of:
+                {bingo::perm::host::*} contains player's name
+                command sender is not a player
+            then:
+                if {bingo} is true:
+                    remove 100000 from {bingo::timeInS}
+                    broadcast ""
+                    broadcast "&6> Bingo wurde beendet"
+                else:
+                    send ""
+                    send "&6> Bingo läuft gerade nicht"
+
+        arg-1 = "gui":
+            if inventory of player does not contain a recovery compass:
+                give player a recovery compass named "&6&kII &bBingo-Tracker &6&kII"
+            set metadata tag "bingocard" of player to chest inventory with 5 rows named "&6Bingo Karte"
+            set {_loop} to 0
+            set {_slot} to 1
+            set {_item} to stick
+            loop 5 times:
+                loop 5 times:
+                    add 1 to {_loop}
+                    add 1 to {_slot}
+                    if {bingo::scoreboard} is false:
+                        set item model of {_item} to "extra:unknown"
+                        set slot {_slot} of metadata tag "bingocard" of player to {_item} named " "
+                        set {_item} to stick
+                    else:
+                        if {bingo::cellsdone::%player%::*} does not contain "%{_loop}%":
+                            set slot {_slot} of metadata tag "bingocard" of player to ("%{bingo::cell::%{_loop}%::%player%}%" parsed as item) named "&r%{bingo::cell::%{_loop}%}%"
+                        else:
+                            set item model of {_item} to "extra:haken"
+                            set slot {_slot} of metadata tag "bingocard" of player to {_item} named "&r%{bingo::cell::%{_loop}%}%"
+                            set {_item} to stick
+                add 4 to {_slot}
+
+            if {bingo::scoreboard} is true:
+                set {_item} to stick
+                if {bingo::cellsdone::%player%::*} contains "7":
+                    set item model of {_item} to "extra:haken"
+                    set slot 12 of metadata tag "bingocard" of player to {_item} named "&a%{bingo::tag::cell::7::%player%}%"
+                    set {_item} to stick
+                else:
+                    set {_loop} to 1
+                    loop 35 times:
+                        if {bingo::cell::7} = ({_loop}rd element of {bingo::card::advancements::*}):
+                            set item model of {_item} to "advancements:%{_loop}%"
+                            set slot 12 of metadata tag "bingocard" of player to {_item} named "&a%{bingo::tag::cell::7::%player%}%"
+                            set {_item} to stick
+                        add 1 to {_loop}
+
+                set {_item} to stick
+                if {bingo::cellsdone::%player%::*} contains "19":
+                    set item model of {_item} to "extra:haken"
+                    set slot 32 of metadata tag "bingocard" of player to {_item} named "&a%{bingo::tag::cell::19::%player%}%"
+                    set {_item} to stick
+                else:
+                    set {_loop} to 1
+                    loop 35 times:
+                        if {bingo::cell::19} = ({_loop}rd element of {bingo::card::advancements::*}):
+                            set item model of {_item} to "advancements:%{_loop}%"
+                            set slot 32 of metadata tag "bingocard" of player to {_item} named "&a%{bingo::tag::cell::19::%player%}%"
+                            set {_item} to stick
+                        add 1 to {_loop}
+
+                set {_item} to stick
+                if {bingo::cellsdone::%player%::*} contains "9":
+                    set item model of {_item} to "extra:haken"
+                    set slot 14 of metadata tag "bingocard" of player to {_item} named "&a%{bingo::tag::cell::9::%player%}%"
+                    set {_item} to stick
+                else:
+                    set {_loop} to 1
+                    loop 13 times:
+                        if {bingo::statistics::mob} = ({_loop}rd element of {bingo::statistics::mobtypes::*}):
+                            set item model of {_item} to "statistics:%(18 + {_loop})%"
+                            set {_stat1} to kill entity stat using {bingo::statistics::parsedmob} of player
+                            set slot 14 of metadata tag "bingocard" of player to {_item} named "&e%{bingo::tag::cell::9::%player%}%: &6%{bingo::statistics::mob}%" with lore "&6> &b%{_stat1}% &6/ &b%{bingo::statistics::kill_entity}%"
+                            set {_item} to stick
+                        add 1 to {_loop}
+
+                set {_item} to stick
+                if {bingo::cellsdone::%player%::*} contains "17":
+                    set item model of {_item} to "extra:haken"
+                    set slot 30 of metadata tag "bingocard" of player to {_item} named "&a%{bingo::tag::cell::17::%player%}%"
+                    set {_item} to stick
+                else:
+                    set {_loop} to 1
+                    loop 18 times:
+                        if {bingo::cell::17} = ({_loop}rd element of {bingo::card::statistics::*}):
+                            set item model of {_item} to "statistics:%{_loop}%"
+                            set {_a} to {bingo::cell::17} parsed as statistic
+                            set {_stat2} to {_a} stat using {bingo::statistics::%{bingo::cell::17}%} of player
+                            if {bingo::cell::17} = "fall_one_cm" or "horse_one_cm" or "pig_one_cm" or "swim_one_cm":
+                                set {_stat2} to round ({_stat2} / 100)
+                            else if {bingo::cell::17} = "sneak_time" or "damage_dealt" or "damage_taken":
+                                set {_stat2} to round ({_stat2} / 20)
+                            set slot 30 of metadata tag "bingocard" of player to {_item} named "&e%{bingo::tag::cell::17::%player%}%" with lore "&6> &b%{_stat2}% &6/ &b%{bingo::statistics::%{bingo::cell::17}%}%"
+                            set {_item} to stick
+                        add 1 to {_loop}
+
+                set {_item} to stick
+                if {bingo::cellfailed::%player%} is true:
+                    set item model of {_item} to "extra:kreuz"
+                    set slot 22 of metadata tag "bingocard" of player to {_item} named "&a%{bingo::tag::cell::13::%player%}%"
+                    set {_item} to stick
+                else:
+                    set {_loop} to 1
+                    loop 5 times:
+                        if {bingo::cell::13} = ({_loop}rd element of {bingo::card::avoid::*}):
+                            set item model of {_item} to "challenges:%{_loop}%"
+                            set slot 22 of metadata tag "bingocard" of player to {_item} named "&c%{bingo::tag::cell::13::%player%}%"
+                            set {_item} to stick
+                        add 1 to {_loop}
+
+                if {bingo::cell::22} = "Carrot":
+                    set slot 39 of metadata tag "bingocard" of player to carrot named "&r%{bingo::cell::22}%"
+                else if {bingo::cell::22} = "Beetroot":
+                    set slot 39 of metadata tag "bingocard" of player to beetroot named "&r%{bingo::cell::22}%"
+                if {bingo::cell::4} = "Carrot":
+                    set slot 5 of metadata tag "bingocard" of player to carrot named "&r%{bingo::cell::4}%"
+                else if {bingo::cell::4} = "Beetroot":
+                    set slot 5 of metadata tag "bingocard" of player to beetroot named "&r%{bingo::cell::4}%"
+
+            set slots 0, 1, 7, 8, 9, 10 , 16, 17, 18, 19, 25, 26, 27, 28, 34, 35, 36, 37, 43 and 44 of metadata tag "bingocard" of player to black stained glass pane named " "
+            open (metadata tag "bingocard" of player) to player
+        
+        arg-1 = "list":
+            {bingo::perm::host::*} contains player's name:
+                arg-2 = "items":
+                    set metadata tag "list" of player to chest inventory with 6 rows named "&6Liste"
+                    set {_slot} to 0
+                    loop {bingo::card::items::%arg-3%::*}:
+                        set slot {_slot} of metadata tag "list" of player to "%loop-value%" parsed as item
+                        add 1 to {_slot}
+                    open (metadata tag "list" of player) to player
+
+                arg-2 = "images":
+                    broadcast ""
+                    arg-3 = "red":
+                        arg-4 = "advancements" or "avoid" or "statistics":
+                            loop {bingo::card::%arg-4%::*}:
+                                broadcast {bingo::image::%loop-value%::%player%}
+                                broadcast ""
+                            if arg-4 = "statistics":
+                                loop {bingo::statistics::mobtypes::*}:
+                                    broadcast {bingo::image::kill_entity_%loop-value%::%player%}
+                                    broadcast ""
+                        else:
+                            loop {bingo::card::items::%arg-4%::*}:
+                                broadcast {bingo::image::%loop-value%::%player%}
+                                broadcast ""
+                    arg-3 = "green":
+                        arg-4 = "advancements" or "avoid" or "statistics":
+                            loop {bingo::card::%arg-4%::*}:
+                                broadcast {bingo::image::2::%loop-value%::%player%}
+                                broadcast ""
+                            if arg-4 = "statistics":
+                                loop {bingo::statistics::mobtypes::*}:
+                                    broadcast {bingo::image::2::kill_entity_%loop-value%::%player%}
+                                    broadcast ""
+                        else:
+                            loop {bingo::card::items::%arg-4%::*}:
+                                broadcast {bingo::image::2::%loop-value%::%player%}
+                                broadcast ""
+        
+
+
+        arg-1 = "results":
+            if at least one of:
+                {bingo::perm::host::*} contains player's name
+                command sender is not a player
+            then:
+                set {bingo} to false
+                clear {bingo::results::*}
+                loop all players:
+                    play sound "entity.experience_orb.pickup" with volume 100 from loop-player to loop-player
+                broadcast ""
+                broadcast ""
+                broadcast "&6> BINGO: &bErgebnisse:"
+                broadcast ""
+                if {bingo::teams} = "An":
+                    set {bingo::points::&cRot} to 0
+                    set {bingo::points::&eGelb} to 0
+                    set {bingo::points::&aGrün} to 0
+                    set {bingo::points::&1Blau} to 0
+                    set {bingo::points::&dPink} to 0
+                    set {bingo::points::&6Orange} to 0
+                    set {bingo::points::&3Zyan} to 0
+                    set {bingo::points::&5Lila} to 0
+                    set {bingo::&cRot} to false
+                    set {bingo::&eGelb} to false
+                    set {bingo::&aGrün} to false
+                    set {bingo::&1Blau} to false
+                    set {bingo::&dPink} to false
+                    set {bingo::&6Orange} to false
+                    set {bingo::&3Zyan} to false
+                    set {bingo::&5Lila} to false
+
+                    loop {bingo::players::*}:
+                        add {bingo::points::%loop-value%} to {bingo::points::%{bingo::team::%loop-value%}%}
+                        set {bingo::%{bingo::team::%loop-value%}%} to true
+                    if {bingo::&cRot} is true:
+                        add {bingo::points::&cRot} to {bingo::results::*}
+                    if {bingo::&eGelb} is true:
+                        add {bingo::points::&eGelb} to {bingo::results::*}
+                    if {bingo::&aGrün} is true:
+                        add {bingo::points::&aGrün} to {bingo::results::*}
+                    if {bingo::&1Blau} is true:
+                        add {bingo::points::&1Blau} to {bingo::results::*}
+                    if {bingo::&dPink} is true:
+                        add {bingo::points::&dPink} to {bingo::results::*}
+                    if {bingo::&6Orange} is true:
+                        add {bingo::points::&6Orange} to {bingo::results::*}
+                    if {bingo::&3Zyan} is true:
+                        add {bingo::points::&3Zyan} to {bingo::results::*}
+                    if {bingo::&5Lila} is true:
+                        add {bingo::points::&5Lila} to {bingo::results::*}
+                else:
+                    loop {bingo::players::*}:
+                        add {bingo::points::%loop-value%} to {bingo::results::*}
+                set {bingo::results::*} to sorted {bingo::results::*}
+                loop {bingo::results::*}:
+                    wait 1 second
+                    broadcast "       &6||"
+                    wait 1 second
+                    broadcast "       &6||"
+                    wait 1 second
+                    broadcast "      &6\/"
+                    wait 1 second
+                    broadcast ""
+                    if {bingo::teams} = "An":
+                        set {_a} to false
+                        loop {bingo::players::*}:
+                            set {_p} to loop-value-2
+                            if "%{bingo::points::%{bingo::team::%{_p}%}%}%" = "%loop-value-1%":
+                                if {_a} is false:
+                                    broadcast "&b> %{bingo::team::%{_p}%}%: &6%loop-value-1%"
+                                    loop {bingo::players::*}:
+                                        set {_p2} to loop-value-3
+                                        if {bingo::team::%{_p2}%} = {bingo::team::%{_p}%}:
+                                            broadcast "&f   > %{_p2}%"
+                                            remove {_p2} from {bingo::players::*}
+                                    set {_a} to true
+                        broadcast ""
+                    else:                    
+                        set {_a} to false
+                        loop {bingo::players::*}:
+                            if {_a} is false:
+                                set {_p} to loop-value-2                        
+                                if "%{bingo::points::%{_p}%}%" = "%loop-value-1%":
+                                    broadcast "&b> %{_p}%: &6%loop-value-1%"
+                                    broadcast ""
+                                    remove {_p} from {bingo::players::*}
+                                    set {_a} to true
+
+                loop 300 times:
+                    wait 1 second
+                    if {bingo} is true:
+                        stop
+                set {bingo::scoreboard} to false
+
+        arg-1 = "stop":
+            if at least one of:
+                {bingo::perm::host::*} contains player's name
+                command sender is not a player
+            then:
+                if {bingo} is true:
+                    set {bingo} to false
+                    set {bingo::scoreboard} to false
+                    set {bingo::timeInS} to 1
+                    broadcast ""
+                    broadcast "&6> Bingo wurde gestoppt"
+                else:
+                    send ""
+                    send "&6> Bingo läuft gerade nicht"
+                loop {bingo::players::*}:
+                    teleport loop-value to spawn of world "bingo"
+                loop {bingo::specs::*}:
+                    teleport loop-value to spawn of world "bingo"
+                    set gamemode of loop-value to survival
+
+        arg-1 = "add":
+            if at least one of:
+                {bingo::perm::host::*} contains player's name
+                command sender is not a player
+            then:
+                if {bingo} is true:
+                    if arg-2 is set:
+                        if arg-2 parsed as a number is a number:
+                            if arg-2 parsed as a number > 0:
+                                set {_n} to round (arg-2 parsed as a number)
+                                add ({_n} * 60) to {bingo::timeInS}
+                                broadcast ""
+                                broadcast "&a> Die Spielzeit wurde um &6%{_n}% Minuten &averlängert"
+                            else:
+                                send ""
+                                send "&6> &cNutze &6/bingo remove &o<Zeit in Minuten>&r&c, um die Spielzeit zu verkürzen"
+                        else:
+                            send ""
+                            send "&6> &c/bingo add &o<Zeit in Minuten>"
+                    else:
+                        send ""
+                        send "&6> &c/bingo add &o<Zeit in Minuten>"
+                else:
+                    send ""
+                    send "&6> Bingo läuft gerade nicht"
+
+        arg-1 = "remove":
+            if at least one of:
+                {bingo::perm::host::*} contains player's name
+                command sender is not a player
+            then:
+                if {bingo} is true:
+                    if arg-2 is set:
+                        if arg-2 parsed as a number is a number:
+                            if arg-2 parsed as a number > 0:
+                                set {_n} to round (arg-2 parsed as a number)
+                                remove ({_n} * 60) from {bingo::timeInS}
+                                broadcast ""
+                                broadcast "&c> Die Spielzeit wurde um &6%{_n}% Minuten &cverkürzt"
+                            else:
+                                send ""
+                                send "&6> &cNutze &6/bingo add &o<Zeit in Minuten>&r&c, um die Spielzeit zu verlängern"
+                        else:
+                            send ""
+                            send "&6> &c/bingo remove &o<Zeit in Minuten>"
+                    else:
+                        send ""
+                        send "&6> &c/bingo remove &o<Zeit in Minuten>"
+                else:
+                    send ""
+                    send "&6> Bingo läuft gerade nicht"
+
+        
+        arg-1 = "rules":
+            send ""
+            send ""
+            play sound "entity.experience_orb.pickup" with volume 100 from player to player
+            set {_n} to 0
+            set {_m::0} to "&b&l---------- Bingo-Regeln ----------"
+            set {_m::1} to ""
+            set {_m::2} to ""
+            set {_m::3} to "&6&l- 25 Aufgaben-Felder:"
+            set {_m::4} to "&e    - 1 Challenge"
+            set {_m::5} to "&e    - 2 Statistiken"
+            set {_m::6} to "&e    - 2 Advancements"
+            set {_m::7} to "&e    - 20 Items"
+            set {_m::8} to ""
+            set {_m::9} to "&6&l- 3 Bingo-Typen:"
+            set {_m::10} to "&e    - Horizontales Bingo"
+            set {_m::11} to "&e    - Vertikales Bingo"
+            set {_m::12} to "&e    - Diagonales Bingo"
+            set {_m::13} to "&d    -> Nur das erste eigene Bingo eines jeden Bingo-Typs gibt Punkte"
+            set {_m::14} to ""
+            set {_m::15} to "&6&l- Punkteverteilung:"
+            set {_m::16} to "&e    - 1 Punkt    pro abgeschlossenem Aufgaben-Feld"
+            set {_m::17} to "&e    - 3 Punkte  für das insgesamt erste horizontale & vertikale Bingo"
+            set {_m::18} to "&e    - 2 Punkte  für jedes horizontale & vertikale Bingo danach"
+            set {_m::19} to "&e    - 2 Punkte  für das diagonale Bingo"
+            set {_m::20} to ""
+            set {_m::21} to "&6&l- Zusätzliche Infos:"
+            set {_m::22} to "&e    - Bingo-Tracker gibt nähere Informationen zu den Aufgaben"
+            set {_m::23} to "&e    - offene Aufgaben sind rot markiert"
+            set {_m::24} to "&e    - abgeschlossene Aufgaben sind grün markiert"
+            set {_m::25} to "&e    - Das zentrale Challenge-Feld ist von Anfang an grün markiert"
+            set {_m::26} to "&e         -> bei Scheitern der Challenge wird es rot markiert"
+            set {_m::27} to "&e         -> die Challenge wird erst nach Ablauf der Zeit gewertet"
+            set {_m::28} to "&e         -> Nach Spielende entstehende Bingos werden gewertet"
+            
+            loop 29 times:
+                send {_m::%{_n}%}
+                wait 1 tick
+                add 1 to {_n}
+            send ""
+
+        arg-1 = "permission":
+            send ""
+            if at least one of:
+                {bingo::perm::admin::*} contains player's name
+                command sender is not a player
+            then:
+                arg-2 = "give":
+                    arg-3 and arg-4 is set:
+                        {bingo::perm::%arg-4%::*} does not contain arg-3:
+                            add arg-3 to {bingo::perm::%arg-4%::*}
+                            send "&6> %arg-3% hat nun die Berechtigung &bbingo.%arg-4%"
+                        else:
+                            send "&6> %arg-3% hat bereits die Berechtigung &bbingo.%arg-4%"
+                arg-2 = "remove":
+                    arg-3 and arg-4 is set:
+                        {bingo::perm::%arg-4%::*} contains arg-3:
+                            remove arg-3 from {bingo::perm::%arg-4%::*}
+                            send "&6> %arg-3% hat nun nicht mehr die Berechtigung &bbingo.%arg-4%"
+                        else:
+                            send "&6> %arg-3% hat die Berechtigung &bbingo.%arg-4%&6 nicht"
+                arg-2 = "list":
+                    (arg-3 parsed as player) is a player:
+                        send "&6> %(arg-3 parsed as player)%:"
+                        loop {bingo::permissions::*}:
+                            if {bingo::perm::%loop-value%::*} contains (arg-3 parsed as player)'s name:
+                                send "&f  > bingo.%loop-value%"
+                    else:
+                        send "&c> Der Spieler %arg-3% ist nicht online"
+            else:
+                send "&c> Dafür hast du keine Rechte"
+
+        arg-1 is not "gui" or "rules" or "permission":
+            command sender is a player:
+                {bingo::perm::host::*} does not contain player's name:
+                
+                    send "&c> Dafür hast du keine Rechte"
+
+function playSound(n: number, p: player):
+    stop all sounds for {_p}
+    if {bingo::sounds} is "An":
+        play sound "custom:%{_n}%" with volume 100 from {_p} to {_p}
+    else:
+        if {_n} = 51 or 52:
+            play sound "block.anvil.destroy" with volume 100 from {_p} to {_p}
+        else if {_n} = 61 or 62:
+            play sound "custom:%{_n}%" with volume 100 from {_p} to {_p}
+        else if {_n} > 20:
+            play sound "entity.player.levelup" with volume 100 from {_p} to {_p}
+        else:
+            play sound "entity.experience_orb.pickup" with volume 100 from {_p} to {_p}
+    if {bingo::teams} = "An":
+        loop all players:
+            if {_n} is not 61 or 62:
+                if {bingo::team::%{_player}%} = {bingo::team::%loop-player%}:
+                    if loop-player is not {_p}:
+                        playSound({_n}, loop-player)
+
+function cellCompleted(player: player, cell: number, type: text):
+    if {bingo::players::*} contains {_player}:
+        broadcast ""
+        add "%{_cell}%" to {bingo::cellsdone::%{_player}%::*}
+        if {bingo::teams} is "An":
+            set {_a} to {bingo::team::%{_player}%}
+        else:
+            set {_a} to {_player}
+        if {_cell} is not 13:
+            set {bingo::image::%{bingo::cell::%{_cell}%}%::%{_player}%} to {bingo::image::2::%{bingo::cell::%{_cell}%}%::%{_player}%}
+        if {_cell} = 13:
+            broadcast "&a> &d%{_a}%&a hat %{_type}% &6%{bingo::cell::13}% &abestanden!"
+        else if {_cell} = 9:
+            broadcast "&a> &d%{_a}%&a hat %{_type}% &6%{bingo::tag::kill_entity}% %{bingo::statistics::mob}% &ageschafft!"
+        else if {bingo::tag::%{bingo::cell::%{_cell}%}%} is set:
+            broadcast "&a> &d%{_a}%&a hat %{_type}% &6%{bingo::tag::%{bingo::cell::%{_cell}%}%}% &ageschafft!"
+        else:
+            broadcast "&a> &d%{_a}%&a hat %{_type}% &6%{bingo::cell::%{_cell}%}% &ageschafft!"
+        add 1 to {bingo::points::%{_player}%}
+        set {_random} to a random integer between 1 and 11
+        playSound({_random}, {_player})
+        checkForBingo({_player})
+        if {bingo::teams} = "An":
+            loop all players:
+                if {bingo::cellsdone::%loop-player%::*} does not contain "%{_cell}%":
+                    if {bingo::team::%loop-player%} = {bingo::team::%{_player}%}:
+                        add "%{_cell}%" to {bingo::cellsdone::%loop-player%::*}
+                        if {_cell} is not 13:
+                            set {bingo::image::%{bingo::cell::%{_cell}%}%::%loop-player%} to {bingo::image::2::%{bingo::cell::%{_cell}%}%::%loop-player%}
+                        playSound({_random}, loop-player)
+
+function cellFailed(player: player):
+    if {bingo::players::*} contains {_player}:
+        broadcast ""
+        if {bingo::cellfailed::%{_player}%} is false:
+            set {bingo::image::%{bingo::cell::13}%::%{_player}%} to {bingo::image::2::%{bingo::cell::13}%::%{_player}%}
+            if {bingo::teams} is "An":
+                broadcast "&c> %{bingo::team::%{_player}%}%&c ist an der Challenge &6%{bingo::tag::cell::13::%{_player}%}% &cgescheitert!"
+            else:
+                broadcast "&c> &d%{_player}%&c ist an der Challenge &6%{bingo::tag::cell::13::%{_player}%}% &cgescheitert!"
+            set {bingo::cellfailed::%{_player}%} to true
+            set {_random} to a random integer between 51 and 52
+            playSound({_random}, {_player})
+            if {bingo::teams} = "An":
+                loop all players:
+                    if {bingo::team::%loop-player%} = {bingo::team::%{_player}%}:
+                        set {bingo::cellfailed::%loop-player%} to true
+                        set {bingo::image::%{bingo::cell::13}%::%loop-player%} to {bingo::image::2::%{bingo::cell::13}%::%loop-player%}
+                        playSound({_random}, loop-player)
+
+function bingoEnd():
+    set {bingo} to false
+    set {bingo::points::horizontally} to 2
+    set {bingo::points::vertically} to 2
+    send title "&6Das Spiel ist zu Ende!" with subtitle "&bWer wohl gewonnen hat?" to all players for 5 seconds
+    loop {bingo::players::*}:
+        set difficulty of loop-value's world to peaceful
+        set time of loop-value's world to 12:00
+        teleport loop-value to spawn of world "bingo"
+        playSound(61, loop-value)
+    loop {bingo::specs::*}:
+        teleport loop-value to spawn of world "bingo"
+        playSound(61, loop-value)
+        set gamemode of loop-value to survival
+
+    loop 8 times:
+        if {bingo} is true:
+            stop
+        wait 1 second
+    loop all players:
+        if {bingo::cellfailed::%loop-player%} is not true:
+            if {bingo::cellsdone::%loop-player%::*} does not contain "13":
+                add "13" to {bingo::cellsdone::%loop-player%::*}
+                cellCompleted(loop-player, 13, "die Challenge")
+                checkForBingo(loop-player)
+    if {bingo::sounds} is "An":
+        wait 20 second
+    else:
+        wait 6 seconds
+    if {bingo} is false:
+        execute console command "/bingo results"
+
+function checkForBingo(player: player):
+    if {bingo::players::*} contains {_player}:
+        if {bingo::sounds} = "An":
+            wait 10 seconds
+        else:
+            wait 1 seconds
+        if (size of {bingo::cellsdone::%{_player}%::*}) > 4:
+            if {bingo::teams} is "An":
+                set {_a} to {bingo::team::%{_player}%}
+            else:
+                set {_a} to {_player}
+            if {bingo::horizontally::%{_player}%} is false:
+                set {_loop} to 0
+                loop 5 times:
+                    if all:
+                        {bingo::cellsdone::%{_player}%::*} contains "%1 + {_loop}%"
+                        {bingo::cellsdone::%{_player}%::*} contains "%2 + {_loop}%"
+                        {bingo::cellsdone::%{_player}%::*} contains "%3 + {_loop}%"
+                        {bingo::cellsdone::%{_player}%::*} contains "%4 + {_loop}%"
+                        {bingo::cellsdone::%{_player}%::*} contains "%5 + {_loop}%"
+                    then:
+                        broadcast ""
+                        broadcast "&a> &d%{_a}%&a hat den Bonus für ein &6Horizontales Bingo &aerhalten!"
+                        broadcast "&b  > %{bingo::points::horizontally}% Punkte!"
+                        set {_random} to a random integer between 21 and 25
+                        add {bingo::points::horizontally} to {bingo::points::%{_player}%}
+                        set {bingo::points::horizontally} to 2
+                        if {bingo::teams} = "An":
+                            loop all players:
+                                if {bingo::team::%loop-player%} = {bingo::team::%{_player}%}:
+                                    set {bingo::horizontally::%loop-player%} to true
+                                    playSound({_random}, loop-player)
+                        else:
+                            set {bingo::horizontally::%{_player}%} to true
+                            playSound({_random}, {_player})
+                        checkForBingo({_player})
+                    add 5 to {_loop}
+            
+            else if {bingo::vertically::%{_player}%} is false:
+                set {_loop} to 0
+                loop 5 times:
+                    if all:
+                        {bingo::cellsdone::%{_player}%::*} contains "%1 + {_loop}%"
+                        {bingo::cellsdone::%{_player}%::*} contains "%6 + {_loop}%"
+                        {bingo::cellsdone::%{_player}%::*} contains "%11 + {_loop}%"
+                        {bingo::cellsdone::%{_player}%::*} contains "%16 + {_loop}%"
+                        {bingo::cellsdone::%{_player}%::*} contains "%21 + {_loop}%"
+                    then:
+                        broadcast ""
+                        broadcast "&a> &d%{_a}%&a hat den Bonus für ein &6Vertikales Bingo &aerhalten!"
+                        broadcast "&b  > %{bingo::points::vertically}% Punkte!"
+                        set {_random} to a random integer between 31 and 35
+                        add {bingo::points::vertically} to {bingo::points::%{_player}%}
+                        set {bingo::points::vertically} to 2
+                        if {bingo::teams} = "An":
+                            loop all players:
+                                if {bingo::team::%loop-player%} = {bingo::team::%{_player}%}:
+                                    set {bingo::vertically::%loop-player%} to true
+                                    playSound({_random}, loop-player)
+                        else:
+                            set {bingo::vertically::%{_player}%} to true
+                            playSound({_random}, {_player})
+                        checkForBingo({_player})
+                    add 1 to {_loop}
+        
+        else if {bingo::diagonally::%{_player}%} is false:
+            set {_loop} to 6
+            set {_slot} to 1
+            loop 2 times:
+                if all:
+                    {bingo::cellsdone::%{_player}%::*} contains "%{_slot}%"
+                    {bingo::cellsdone::%{_player}%::*} contains "%{_slot} + {_loop}%"
+                    {bingo::cellsdone::%{_player}%::*} contains "%{_slot} + {_loop} * 2%"
+                    {bingo::cellsdone::%{_player}%::*} contains "%{_slot} + {_loop} * 3%"
+                    {bingo::cellsdone::%{_player}%::*} contains "%{_slot} + {_loop} * 4%"
+                then:
+                    broadcast ""
+                    set {_random} to a random integer between 41 and 45
+                    broadcast "&a> &d%{_a}%&a hat den Bonus für ein &6Diagonales Bingo &aerhalten!"
+                    broadcast "&b  > 2 Punkte!"
+                    add 2 to {bingo::points::%{_player}%}
+                    if {bingo::teams} = "An":
+                        loop all players:
+                            if {bingo::team::%loop-player%} = {bingo::team::%{_player}%}:
+                                set {bingo::diagonally::%loop-player%} to true
+                                playSound({_random}, loop-player)
+                    else:
+                        set {bingo::diagonally::%{_player}%} to true
+                        playSound({_random}, {_player})
+                    checkForBingo({_player})
+                set {_loop} to 4
+                set {_slot} to 5
+
+function gui(t: text,p: player):
+    if {_t} = "bingo":
+        set metadata tag "bingo" of {_p} to chest inventory with 5 rows named "&6- Bingo -"
+        set slot 10 of metadata tag "bingo" of {_p} to a clock named "&eSpieldauer:" with lore "&6%{bingo::time}% Minuten" and "" and "&3&lLeftclick: &a+5 Minuten" and "&b&lRightclick: &c-5 Minuten"
+        set slot 16 of metadata tag "bingo" of {_p} to a orange wool named "&eTeams:" with lore "&6%{bingo::teams}%" and "" and "&3&lLeftclick: &aAn&3/&cAus" and "&b&lRightclick: &bKonfigurieren"
+        set slot 22 of metadata tag "bingo" of {_p} to a lime concrete powder named "&aStart"
+        set slot 28 of metadata tag "bingo" of {_p} to music disc pigstep named "&eSounds:" with lore "&6%{bingo::sounds}%"
+        set slot 34 of metadata tag "bingo" of {_p} to a barrier named "&eUnbelegt:" with lore "&6ohne Funktion"
+        open (metadata tag "bingo" of {_p}) to {_p}
+
+    else if {_t} = "teams":
+        set {_s} to 0
+        set metadata tag "teams" of {_p} to chest inventory with 5 rows named "&6- Teams -"
+        loop all players:
+            set slot {_s} of metadata tag "teams" of {_p} to loop-player's head named loop-player's name with lore "&6Team: %{bingo::team::%loop-player%}%" and "" and "&3&lLeftclick: &3Team ändern" and "&b&lRightclick: &bSpectator setzen"
+            add 1 to {_s}
+        set slot 36 of metadata tag "teams" of {_p} to yellow stained glass pane named "&eZurück"
+        open (metadata tag "teams" of {_p}) to {_p}
+
+on inventory slot change:
+    if {bingo} is true:
+        if {bingo::players::*} contains player:
+            set {_loop} to 0
+            loop 25 times:
+                add 1 to {_loop}
+                set {_i} to {bingo::cell::%{_loop}%} parsed as item
+                if player's inventory contains {_i}:
+                    if {bingo::cellsdone::%player%::*} does not contain "%{_loop}%":
+                        wait 1 tick
+                        remove 1 of event-item from inventory of player
+                        cellCompleted(player, {_loop}, "das Item")
+                
+                if player's inventory contains goat horn:
+                    if {bingo::cell::%{_loop}%} = "Goat Horn":
+                        if {bingo::cellsdone::%player%::*} does not contain "%{_loop}%":
+                            remove goat horn from inventory of player
+                            cellCompleted(player, {_loop}, "das Item")
+
+                if player's inventory contains enchanted book:
+                    if {bingo::cell::%{_loop}%} = "Enchanted Book":
+                        if {bingo::cellsdone::%player%::*} does not contain "%{_loop}%":
+                            remove enchanted book from inventory of player
+                            cellCompleted(player, {_loop}, "das Item")
+
+                if player's inventory contains carrot:
+                    if {bingo::cell::%{_loop}%} = "Carrot":
+                        if {bingo::cellsdone::%player%::*} does not contain "%{_loop}%":
+                            remove carrot from inventory of player
+                            cellCompleted(player, {_loop}, "das Item")
+
+                if player's inventory contains beetroot:
+                    if {bingo::cell::%{_loop}%} = "Beetroot":
+                        if {bingo::cellsdone::%player%::*} does not contain "%{_loop}%":
+                            remove beetroot from inventory of player
+                            cellCompleted(player, {_loop}, "das Item")
+
+                if player's inventory contains suspicious stew:
+                    if {bingo::cell::%{_loop}%} = "Suspicious Stew":
+                        if {bingo::cellsdone::%player%::*} does not contain "%{_loop}%":
+                            remove suspicious stew from inventory of player
+                            cellCompleted(player, {_loop}, "das Item")
+
+on inventory click:
+    if event-inventory = metadata tag "bingocard" of player:
+        cancel event
+
+    if event-inventory = metadata tag "bingo" of player:
+        cancel event
+        if event-slot = 10:
+            if click action is left mouse button:
+                add 5 to {bingo::time}
+            else if click action is right mouse button:
+                remove 5 from {bingo::time}
+            gui("bingo", player)
+        else if event-slot = 16:
+            if click action is left mouse button:
+                if {bingo::teams} = "An":
+                    set {bingo::teams} to "Aus"
+                    loop all players:
+                        if {bingo::specs::*} does not contain loop-player:
+                            set {bingo::team::%loop-player%} to "&fSpieler"
+                else:
+                    set {bingo::teams} to "An"
+                    loop all players:
+                        if {bingo::specs::*} does not contain loop-player:
+                            set {bingo::team::%loop-player%} to "&cRot"
+            gui("bingo", player)
+            if click action is right mouse button:
+                gui("teams", player)
+        else if event-slot = 22:
+            make player execute command "/bingo start %{bingo::time}%"
+            close player's inventory
+        else if event-slot = 28:
+            if {bingo::sounds} = "An":
+                set {bingo::sounds} to "Aus"
+            else:
+                set {bingo::sounds} to "An"
+            gui("bingo", player)
+
+    if event-inventory = metadata tag "teams" of player:
+        cancel event
+        if event-item is a player head:
+            set {_p} to name of event-item parsed as player
+            if click action is left mouse button:
+                if {bingo::teams} = "An":
+                    if {bingo::team::%{_p}%} = "&cRot":
+                        set {bingo::team::%{_p}%} to "&eGelb"
+                    else if {bingo::team::%{_p}%} = "&eGelb":
+                        set {bingo::team::%{_p}%} to "&aGrün"
+                    else if {bingo::team::%{_p}%} = "&aGrün":
+                        set {bingo::team::%{_p}%} to "&1Blau"
+                    else if {bingo::team::%{_p}%} = "&1Blau":
+                        set {bingo::team::%{_p}%} to "&dPink"
+                    else if {bingo::team::%{_p}%} = "&dPink":
+                        set {bingo::team::%{_p}%} to "&6Orange"
+                    else if {bingo::team::%{_p}%} = "&6Orange":
+                        set {bingo::team::%{_p}%} to "&3Zyan"
+                    else if {bingo::team::%{_p}%} = "&3Zyan":
+                        set {bingo::team::%{_p}%} to "&5Lila"
+                    else if {bingo::team::%{_p}%} = "&5Lila":
+                        set {bingo::team::%{_p}%} to "&cRot"
+
+            if click action is right mouse button:
+                if {bingo::team::%{_p}%} is not "&7Zuschauer":
+                    set {bingo::team::%{_p}%} to "&7Zuschauer"
+                    if {bingo::specs::*} does not contain {_p}:
+                        add {_p} to {bingo::specs::*}
+                else:
+                    if {bingo::teams} = "An":
+                        set {bingo::team::%{_p}%} to "&cRot"
+                    else:
+                        set {bingo::team::%{_p}%} to "&fSpieler"
+                    remove {_p} from {bingo::specs::*}
+            gui("teams", player)
+
+        else if event-slot = 36:
+            make player execute command "/bingo"
+
+
+on advancement done:
+    if {bingo} is true:
+        if "%event-advancement%" = "minecraft:%{bingo::cell::7}%":
+            cellCompleted(player, 7, "das Advancement")
+        else if "%event-advancement%" = "minecraft:%{bingo::cell::19}%":
+            cellCompleted(player, 19, "das Advancement")
+
+on death of player:
+    if {bingo::cell::13} = "Tod":
+        if {bingo} is true:
+            cellFailed(victim)
+    wait 1 tick
+    give victim a recovery compass named "&6&kII &bBingo-Tracker &6&kII"
+
+on damage of player:
+    if {bingo} is true:
+        if {bingo::move} is false:
+            cancel event
+        else if {bingo::cell::13} = "Feuer-Schaden":
+            if damage cause is fire or lava:
+                cellFailed(victim)
+
+on damage:
+    if {bingo} is true:
+        if {bingo::move} is false:
+            cancel event
+        else if {bingo::cell::13} = "Mit Axt kämpfen":
+            if attacker is player:
+                if tool of attacker is a wooden axe or a stone axe or a iron axe or a diamond axe or a netherite axe:
+                    cellFailed(attacker)
+
+on break:
+    if {bingo} is true:
+        if {bingo::move} is false:
+            cancel event
+        else if {bingo::cell::13} = "Schaufel-Blöcke ohne Schaufel abbauen":
+            if event-entity is a player:
+                if {bingo::schaufelblöcke::*} contains event-block:
+                    if tool of player is not a wooden shovel or a stone shovel or a iron shovel or a diamond shovel or a netherite shovel:
+                        cellFailed(player)
+
+on player pick up of wheat seeds or melon seeds or pumpkin seeds or beetroot seeds or torchflower seeds:
+    if {bingo} is true:
+        if {bingo::cell::13} = "Seeds Aufsammeln":
+            cellFailed(player)
+
+on rightclick using recovery compass:
+    if name of event-item = "&6&kII &bBingo-Tracker &6&kII":
+        make player execute command "/bingo gui"
+
+on tab complete of "/bingo": 
+    set tab completions for position 1 to "end", "stop", "gui", "list", "rules", "add", "remove" and "permission"
+    if tab arg-1 = "list":
+        set tab completions for position 2 to "items" and "images"
+        set tab completions for position 3 to "red" and "green"
+        set tab completions for position 4 to "plants", "nether", "crafting", "structure", "biome", "ore", "stone", "color", "food", "advancements", "avoid" and "statistics"
+    if tab arg-1 = "permission":
+        set tab completions for position 2 to "give", "remove" and "list"
+        set tab completions for position 3 to all players
+        set tab completions for position 4 to {bingo::permissions::*}
+
+
+every second:
+    loop all players:
+        set title of loop-player's scoreboard to "&6- %{bingo::time::hours}% : %{bingo::time::minutes}% : %{bingo::time::seconds}% -"
+        if {bingo::scoreboard} is true:
+            set line 1 of loop-player's scoreboard to ""
+            set line 2 of loop-player's scoreboard to ""
+            set line 3 of loop-player's scoreboard to "%{bingo::image::%{bingo::cell::1}%::%loop-player%}% %{bingo::image::%{bingo::cell::2}%::%loop-player%}% %{bingo::image::%{bingo::cell::3}%::%loop-player%}% %{bingo::image::%{bingo::cell::4}%::%loop-player%}% %{bingo::image::%{bingo::cell::5}%::%loop-player%}%"
+            set line 4 of loop-player's scoreboard to ""
+            set line 5 of loop-player's scoreboard to ""
+            set line 6 of loop-player's scoreboard to "%{bingo::image::%{bingo::cell::6}%::%loop-player%}% %{bingo::image::%{bingo::cell::7}%::%loop-player%}% %{bingo::image::%{bingo::cell::8}%::%loop-player%}% %{bingo::image::%{bingo::cell::9}%::%loop-player%}% %{bingo::image::%{bingo::cell::10}%::%loop-player%}%"
+            set line 7 of loop-player's scoreboard to ""
+            set line 8 of loop-player's scoreboard to ""
+            set line 9 of loop-player's scoreboard to "%{bingo::image::%{bingo::cell::11}%::%loop-player%}% %{bingo::image::%{bingo::cell::12}%::%loop-player%}% %{bingo::image::%{bingo::cell::13}%::%loop-player%}% %{bingo::image::%{bingo::cell::14}%::%loop-player%}% %{bingo::image::%{bingo::cell::15}%::%loop-player%}%"
+            set line 10 of loop-player's scoreboard to ""
+            set line 11 of loop-player's scoreboard to ""
+            set line 12 of loop-player's scoreboard to "%{bingo::image::%{bingo::cell::16}%::%loop-player%}% %{bingo::image::%{bingo::cell::17}%::%loop-player%}% %{bingo::image::%{bingo::cell::18}%::%loop-player%}% %{bingo::image::%{bingo::cell::19}%::%loop-player%}% %{bingo::image::%{bingo::cell::20}%::%loop-player%}%"
+            set line 13 of loop-player's scoreboard to ""
+            set line 14 of loop-player's scoreboard to ""
+            set line 15 of loop-player's scoreboard to "%{bingo::image::%{bingo::cell::21}%::%loop-player%}% %{bingo::image::%{bingo::cell::22}%::%loop-player%}% %{bingo::image::%{bingo::cell::23}%::%loop-player%}% %{bingo::image::%{bingo::cell::24}%::%loop-player%}% %{bingo::image::%{bingo::cell::25}%::%loop-player%}%"
+        else:
+            set line 1 of loop-player's scoreboard to ""
+            set line 2 of loop-player's scoreboard to ""
+            set line 3 of loop-player's scoreboard to "%{bingo::image::unknown::%loop-player%}% %{bingo::image::unknown::%loop-player%}% %{bingo::image::unknown::%loop-player%}% %{bingo::image::unknown::%loop-player%}% %{bingo::image::unknown::%loop-player%}%"
+            set line 4 of loop-player's scoreboard to ""
+            set line 5 of loop-player's scoreboard to ""
+            set line 6 of loop-player's scoreboard to "%{bingo::image::unknown::%loop-player%}% %{bingo::image::unknown::%loop-player%}% %{bingo::image::unknown::%loop-player%}% %{bingo::image::unknown::%loop-player%}% %{bingo::image::unknown::%loop-player%}%"
+            set line 7 of loop-player's scoreboard to ""
+            set line 8 of loop-player's scoreboard to ""
+            set line 9 of loop-player's scoreboard to "%{bingo::image::unknown::%loop-player%}% %{bingo::image::unknown::%loop-player%}% %{bingo::image::unknown::%loop-player%}% %{bingo::image::unknown::%loop-player%}% %{bingo::image::unknown::%loop-player%}%"
+            set line 10 of loop-player's scoreboard to ""
+            set line 11 of loop-player's scoreboard to ""
+            set line 12 of loop-player's scoreboard to "%{bingo::image::unknown::%loop-player%}% %{bingo::image::unknown::%loop-player%}% %{bingo::image::unknown::%loop-player%}% %{bingo::image::unknown::%loop-player%}% %{bingo::image::unknown::%loop-player%}%"
+            set line 13 of loop-player's scoreboard to ""
+            set line 14 of loop-player's scoreboard to ""
+            set line 15 of loop-player's scoreboard to "%{bingo::image::unknown::%loop-player%}% %{bingo::image::unknown::%loop-player%}% %{bingo::image::unknown::%loop-player%}% %{bingo::image::unknown::%loop-player%}% %{bingo::image::unknown::%loop-player%}%"
+
+    if {bingo} is true:
+        set {_cell} to 9
+        loop 2 times:
+            loop all players:
+                if {bingo::cellsdone::%loop-player%::*} does not contain "%{_cell}%":
+                    set {_a} to {bingo::cell::%{_cell}%} parsed as statistic
+                    set {_b} to {bingo::cell::%{_cell}%}
+                    if {_cell} = 9:
+                        if kill entity stat using {bingo::statistics::parsedmob} of loop-player >= {bingo::statistics::kill_entity}:
+                            cellCompleted(loop-player, {_cell}, "die Statistik")              
+                    else:
+                        set {_score} to {_a} stat of loop-player
+                        if {bingo::teams} = "An":
+                            loop {bingo::players::*}:
+                                if {bingo::team::%loop-value-3%} = {bingo::team::%loop-player%}:
+                                    add {_a} stat of loop-value-3 to {_score}
+                        if {_b} =  "fall_one_cm" or "horse_one_cm" or "pig_one_cm" or "swim_one_cm":
+                            if {_score} >= ({bingo::statistics::%{_b}%} * 100):
+                                cellCompleted(loop-player, {_cell}, "die Statistik")
+                        else if {_b} = "sneak_time" or "damage_dealt" or "damage_taken":
+                            if {_score} >= ({bingo::statistics::%{_b}%} * 20):
+                                cellCompleted(loop-player, {_cell}, "die Statistik")
+                        else if {_score} >= {bingo::statistics::%{_b}%}:
+                            cellCompleted(loop-player, {_cell}, "die Statistik")
+
+            set {_cell} to 17
+    
+    if ({bingo::countdown} + 1) > 0:
+        set {bingo::time::seconds} to {bingo::countdown}
+        set {bingo::time::minutes} to 0
+        set {bingo::time::hours} to 0
+        remove 1 from {bingo::countdown}
+        loop all players:
+            if ({bingo::countdown} + 2) / 5 = round ({bingo::countdown} + 2) / 5:
+                if {bingo::countdown} > 0:
+                    play sound "block.glass.place" with volume 100 from loop-player to loop-player
+            else if {bingo::countdown} < 2:
+                play sound "block.amethyst_block.hit" with volume 100 from loop-player to loop-player
+    else:
+        if {bingo::timeInS} > 0:
+            remove 1 from {bingo::timeInS}
+            set {_time} to {bingo::timeInS}
+            set {bingo::time::hours} to 0
+            set {bingo::time::minutes} to 0
+            set {bingo::time::seconds} to 0
+            loop 10 times:
+                if {_time} >= 3600:
+                    add 1 to {bingo::time::hours}
+                    remove 3600 from {_time}
+            loop 60 times:
+                if {_time} >= 60:
+                    add 1 to {bingo::time::minutes}
+                    remove 60 from {_time}
+            set {bingo::time::seconds} to {_time}
+        else:
+            if {bingo::timeInS} < 0:
+                set {bingo::timeInS} to 1
+            if {bingo::timeInS} = 0:
+                if {bingo} is true:
+                    bingoEnd()
+    
+    if {bingo::teams} is "An":
+        loop all players:
+            send action bar "                                                                                                              &dTeam: %{bingo::team::%loop-player%}%" to loop-player
+    loop {bingo::specs::*}:
+        send action bar "                                                                                                               &7 Zuschauer" to loop-value
+
+every 5 seconds:
+    loop all players:
+        if inventory of loop-player does not contain a recovery compass:
+            give loop-player a recovery compass named "&6&kII &bBingo-Tracker &6&kII"
+
+on player move:
+    if {bingo::move} is false:
+        if event-location's x-coordinate is not past event-location's x-coordinate:
+            cancel event
+        if event-location's z-coordinate is not past event-location's z-coordinate:
+            cancel event
+
+on skript start:
+    set {bingo} to false
+    set {bingo::scoreboard} to false
+    reload()
+
+
+
+
