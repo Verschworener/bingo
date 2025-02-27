@@ -1,0 +1,126 @@
+on rightclick on entity:
+    if name of event-entity = "&6&l- Bingo -":
+        send resource pack "https://raw.githubusercontent.com/Verschworener/bingo/refs/heads/main/texturepack/bingo-1.0.zip" with uuid {bingo::resourcepack} to player
+        if {bingo} is false:
+            teleport player to {bingo::lobby}
+            bingoReloadImages(player)
+            clear player's inventory
+            wait 10 ticks
+            if {bingo::teams} = "An":
+                set slot 0 of player to magenta wool named "&dTeams: &aAn"
+            else:
+                set slot 0 of player to purple wool named "&dTeams: &cAus"
+            set slot 2 of player to a book named "&6Bingo-Regeln"
+            set slot 4 of player to red concrete powder named "&cNicht Bereit"
+            set slot 6 of player to a compass named "&6&kII &bTeam-Auswahl &6&kII"
+            set slot 8 of player to magenta stained glass pane named "&a+15 &f| &c-15"
+        if {bingo} is true:
+            teleport player to spawn of world "bingo"
+            if {bingo::players::*} does not contain player:
+                bingoReloadImages(player)
+                set {bingo::team::%player%} to "&7Zuschauer"
+                wait 3 ticks
+                set player's gamemode to spectator
+            else:
+                if {bingo::teams} = "An":
+                    loop all players:
+                        if {bingo::team::%loop-player%} = {bingo::team::%player%}:
+                            loop {bingo::cellsdone::%loop-player%::*}:
+                                if {bingo::cellsdone::%player%::*} does not contain loop-value-2:
+                                    add loop-value-2 to {bingo::cellsdone::%player%::*}
+                                    set {bingo::image::%{bingo::cell::%loop-value-2%}%::%player%} to {bingo::image::2::%{bingo::cell::%loop-value-2%}%::%player%}
+                            if {bingo::cellfailed::%loop-player%} is true:
+                                set {bingo::cellfailed::%player%} to true
+                                set {bingo::image::%{bingo::cell::13}%::%player%} to {bingo::image::2::%{bingo::cell::13}%::%player%}
+
+on rightclick:
+    if event-item = magenta wool or purple wool:
+        if name of event-item = "&dTeams: &aAn":
+            loop {bingo::allplayers::*}:
+                set slot 0 of loop-value's inventory to purple wool named "&dTeams: &cAus"
+                send "> %player% hat &cTeams deaktiviert" to loop-value
+                play sound "block.flowering_azalea.place" with volume 100 from loop-value to loop-value
+            set {bingo::teams} to "Aus"
+
+        if name of event-item = "&dTeams: &cAus":
+            loop {bingo::allplayers::*}:
+                set slot 0 of loop-value's inventory to magenta wool named "&dTeams: &aAn"
+                send "> %player% hat &aTeams aktiviert" to loop-value
+                play sound "block.flowering_azalea.place" with volume 100 from loop-value to loop-value
+            set {bingo::teams} to "An"
+    
+    if event-item = book:
+        if name of event-item = "&6Bingo-Regeln":
+            make player execute command "/bingo rules"
+    
+    if event-item = red concrete powder:
+        if name of event-item = "&cNicht Bereit":
+            set slot 4 of player to lime concrete powder named "&aBereit"
+            if {bingo::readycheck::*} does not contain player:
+                add player to {bingo::readycheck::*}
+            loop {bingo::readycheck::*}:   
+                if {bingo::allplayers::*} does not contain loop-value:
+                    remove loop-value from {bingo::readycheck::*}
+            if size of {bingo::allplayers::*} = size of {bingo::readycheck::*}:
+                loop {bingo::allplayers::*}:
+                    send "&aAlle Spieler sind bereit!" to loop-value
+                wait 10 ticks
+                execute console command "/bingo start %{bingo::time}%"
+                clear {bingo::readycheck::*}
+            else:
+                send "" to player
+                send "&cNoch nicht bereit sind:" to player
+                loop {bingo::allplayers::*}:
+                    if {bingo::readycheck::*} does not contain loop-value:
+                        send "> %loop-value%" to player
+
+    if event-item = lime concrete powder:
+        if name of event-item = "&aBereit":
+            remove player from {bingo::readycheck::*}
+            set slot 4 of player to red concrete powder named "&cNicht Bereit"
+
+    if event-item = magenta stained glass pane:
+        if name of event-item = "&a+15 &f| &c-15":
+            if {bingo::time} > 15:
+                remove 15 from {bingo::time}
+                loop {bingo::allplayers::*}:
+                    send "> %player% hat um &c15 Minuten verkürzt" to loop-value
+                    play sound "block.flowering_azalea.place" with volume 100 from loop-value to loop-value
+
+on leftclick:
+    if event-item = magenta stained glass pane:
+        if name of event-item = "&a+15 &f| &c-15":
+            if {bingo::time} < 180:
+                add 15 to {bingo::time}
+                loop {bingo::allplayers::*}:
+                    send "> %player% hat um &a15 Minuten verlängert" to loop-value
+                    play sound "block.flowering_azalea.place" with volume 100 from loop-value to loop-value
+
+
+
+on inventory click:
+    if event-inventory contains magenta stained glass pane named "&a+15 &f| &c-15":
+        cancel event
+
+every second:
+    clear {bingo::allplayers::*}
+    loop all players:
+        if at least one of:
+            loop-player's world = "bingo" or "bingo_nether" or "bingo_the_end"
+            (distance between loop-player and {bingo::lobby}) < 20
+        then:
+            add loop-player to {bingo::allplayers::*}
+        else if loop-player has a resource pack loaded:
+            remove resource pack with uuid {bingo::resourcepack} from loop-player
+
+command /bingoloc <text>:
+    trigger:
+        arg-1 = "lobby":
+            set {bingo::lobby} to player's location
+
+on command "/hub":
+    teleport player to {bingo::lobby}
+    clear player's inventory
+
+
+        
