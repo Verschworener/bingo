@@ -1,0 +1,194 @@
+on quit:
+    set quit message to ""
+    broadcast ""
+    broadcast "&c> %player% hat Bingo verlassen"
+    wait 5 ticks
+    if number of online players = 0:
+        execute console command "/bingo stop"
+
+on join:
+    set join message to ""
+    broadcast ""
+    broadcast "&a> %player% ist Bingo beigetreten"
+    send resource pack "https://raw.githubusercontent.com/Verschworener/bingo/refs/heads/main/texturepack/bingo-1.0.zip" with uuid {bingo::resourcepack} to player
+    if {bingo} is false:
+        teleport player to {bingo::lobby}
+        ReloadImages(player)
+        clear player's inventory
+        wait 2 ticks
+        set slot 2 of player to a book named "&6Bingo-Regeln"
+        set slot 4 of player to red concrete powder named "&cNicht Bereit"
+        set slot 6 of player to a compass named "&6&kII &bTeam-Auswahl &6&kII"
+        if at least one of:
+            number of all players = 1
+            player has permission "bingo.admin"
+        then:
+            if {bingo::teams} = "An":
+                set slot 0 of player to magenta wool named "&dTeams: &aAn"
+            else:
+                set slot 0 of player to purple wool named "&dTeams: &cAus"
+            set slot 8 of player to magenta stained glass pane named "&a+15 &f| &c-15"
+        else:
+            if player has permission "bingo.admin":
+                loop all players:
+                    if loop-player does not have permission "bingo.admin":
+                        set slots 0 and 8 of loop-player to air
+    if {bingo} is true:
+        if {bingo::players::*} does not contain player:
+            ReloadImages(player)
+            set {bingo::team::%player%} to "&7Zuschauer"
+            wait 3 ticks
+            set player's gamemode to spectator
+        else:
+            if {bingo::teams} = "An":
+                loop all players:
+                    if {bingo::team::%loop-player%} = {bingo::team::%player%}:
+                        loop {bingo::cellsdone::%loop-player%::*}:
+                            if {bingo::cellsdone::%player%::*} does not contain loop-value-2:
+                                add loop-value-2 to {bingo::cellsdone::%player%::*}
+                                set {bingo::image::%{bingo::cell::%loop-value-2%}%::%player%} to {bingo::image::2::%{bingo::cell::%loop-value-2%}%::%player%}
+                        if {bingo::cellfailed::%loop-player%} is true:
+                            set {bingo::cellfailed::%player%} to true
+                            set {bingo::image::%{bingo::cell::13}%::%player%} to {bingo::image::2::%{bingo::cell::13}%::%player%}
+
+on rightclick:
+    if event-item = magenta wool or purple wool:
+        if name of event-item = "&dTeams: &aAn":
+            loop all players:
+                wait 1 tick
+                set slot 0 of loop-player's inventory to purple wool named "&dTeams: &cAus"
+                send "" to loop-player
+                send "> %player% hat &cTeams deaktiviert" to loop-player
+                play sound "block.flowering_azalea.place" with volume 100 from loop-player to loop-player
+            set {bingo::teams} to "Aus"
+
+        if name of event-item = "&dTeams: &cAus":
+            wait 1 tick
+            loop all players:
+                set slot 0 of loop-player's inventory to magenta wool named "&dTeams: &aAn"
+                send "" to loop-player
+                send "> %player% hat &aTeams aktiviert" to loop-player
+                play sound "block.flowering_azalea.place" with volume 100 from loop-player to loop-player
+            set {bingo::teams} to "An"
+    
+    if event-item = book:
+        if name of event-item = "&6Bingo-Regeln":
+            make player execute command "/bingo rules"
+    
+    if event-item = red concrete powder:
+        if name of event-item = "&cNicht Bereit":
+            if {bingo::forcestart} = false:
+                wait 1 tick
+                set slot 4 of player to lime concrete powder named "&aBereit"
+                if {bingo::readycheck::*} does not contain player:
+                    add player to {bingo::readycheck::*}
+                loop {bingo::readycheck::*}:   
+                    if loop-value is not online:
+                        remove loop-value from {bingo::readycheck::*}
+                if number of all players = size of {bingo::readycheck::*}:
+                    set {_l} to 0
+                    loop all players:
+                        if {bingo::team::%loop-player%} = "&7Zuschauer":
+                            add 1 to {_l}
+                    if number of all players is not {_l}:
+                        broadcast ""
+                        broadcast "&aAlle Spieler sind bereit!"
+                        loop 20 times:
+                            wait 1 second
+                            if number of all players is not size of {bingo::readycheck::*}:
+                                broadcast ""
+                                broadcast "&cStart abgebrochen"
+                                stop
+                            if {bingo::forcestart} is true:
+                                stop
+                            if loop-value = 1 or 6 or 11 or 16 or 18 or 19 or 20:
+                                set {_l} to 21 - loop-value
+                                loop all players:
+                                    play sound "entity.armor_stand.fall" with volume 100 from loop-player to loop-player
+                                broadcast ""
+                                broadcast "&eSpielstart in &6&l%{_l}% &6Sekunden"
+                        execute console command "/bingo start %{bingo::time}%"
+                        clear {bingo::readycheck::*}
+                    else:
+                        broadcast ""
+                        broadcast "&cBingo kann nicht ohne Spieler starten"
+                else:
+                    send "" to player
+                    send "&cNoch nicht bereit sind:" to player
+                    loop all players:
+                        if {bingo::readycheck::*} does not contain loop-player:
+                            send "> %loop-player%" to player
+
+    if event-item = lime concrete powder:
+        if name of event-item = "&aBereit":
+            if {bingo::forcestart} = false:
+                wait 1 tick
+                remove player from {bingo::readycheck::*}
+                set slot 4 of player to red concrete powder named "&cNicht Bereit"
+
+    if event-item = magenta stained glass pane:
+        if name of event-item = "&a+15 &f| &c-15":
+            wait 1 tick
+            if {bingo::time} > 15:
+                remove 15 from {bingo::time}
+                loop all players:
+                    send "" to loop-player
+                    send "> %player% hat um &c15 Minuten verkürzt" to loop-player
+                    play sound "block.flowering_azalea.place" with volume 100 from loop-player to loop-player
+
+on leftclick:
+    if event-item = magenta stained glass pane:
+        if name of event-item = "&a+15 &f| &c-15":
+            if {bingo::time} < 180:
+                add 15 to {bingo::time}
+                loop all players:
+                    send "" to loop-player
+                    send "> %player% hat um &a15 Minuten verlängert" to loop-player
+                    play sound "block.flowering_azalea.place" with volume 100 from loop-player to loop-player
+
+
+
+on inventory click:
+    if player's world is not "bingo" or "bingo_nether" or "bingo_the_end":
+        if player's gamemode is not creative:
+            cancel event
+
+on drop:
+    if player's world is not "bingo" or "bingo_nether" or "bingo_the_end":
+        if player's gamemode is not creative:
+            cancel event
+
+on place:
+    if player's world is not "bingo" or "bingo_nether" or "bingo_the_end":
+        if player's gamemode is not creative:
+            cancel event
+
+on break:
+    if player's world is not "bingo" or "bingo_nether" or "bingo_the_end":
+        if player's gamemode is not creative:
+            cancel event
+
+on damage of player:
+    if victim's world is not "bingo" or "bingo_nether" or "bingo_the_end":
+        cancel event
+
+on hunger meter change:
+    if player's world is not "bingo" or "bingo_nether" or "bingo_the_end":
+        cancel event
+
+command /bingoloc <text>:
+    trigger:
+        arg-1 = "lobby":
+            player has permission "bingo.admin":
+                set {bingo::lobby} to player's location
+                send ""
+                send "&6> Lobby für Bingo gesetzt!"
+
+on tab complete of "/bingoloc": 
+    player has permission "bingo.admin":
+        set tab completions for position 1 to "lobby"
+
+# leaderboard:
+#     {bingo::lb::boardsFinished::%player%}
+#     {bingo::lb::fastestTime::%player%}
+#     {bingo::lb::totalCells::%player%}
